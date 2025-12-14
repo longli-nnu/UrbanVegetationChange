@@ -1,0 +1,46 @@
+//var geometry = ee.Geometry.Rectangle([-180,-60,-90,0]);
+//var geometry = ee.Geometry.Rectangle([-180,0,-90,70]);
+//var geometry = ee.Geometry.Rectangle([-90,-60,0,0]);
+//var geometry = ee.Geometry.Rectangle([-90,0,0,70]);
+//var geometry = ee.Geometry.Rectangle([0,-60,90,0]);
+//var geometry = ee.Geometry.Rectangle([0,0,90,70]);
+//var geometry = ee.Geometry.Rectangle([90,-60,180,0]);
+//var geometry = ee.Geometry.Rectangle([90,0,180,70]);
+var geometry = ee.Geometry.Rectangle([0,-90,180,90]);
+var modis = ee.ImageCollection('MODIS/061/MOD13Q1').filterDate('2000-03-01', '2023-02-28').select('EVI');
+print(modis);
+
+var annualCol=ee.List([]);
+for(var i=2000;i<2023;i++){
+  var img=modis.filterDate(i+'-03-01',i+1+'-02-28');
+  var img_mean=img.select("EVI").mean().toInt16();//INT
+  //var img_mean=img.select("EVI").mean();
+  annualCol=annualCol.add(img_mean);
+}
+
+annualCol=ee.ImageCollection(annualCol);
+print(annualCol);
+
+function exportImageCollection(imgCol) { 
+  var indexList = imgCol.reduceColumns(ee.Reducer.toList(), ["system:index"]) 
+                        .get("list"); 
+  indexList.evaluate(function(indexs) { 
+    for (var i=0; i<indexs.length; i++) { 
+      var image = imgCol.filter(ee.Filter.eq("system:index", indexs[i])).first(); 
+      //image = image.multiply(50).toInt16();//updateMask(image.neq(-9999))
+      Export.image.toDrive({ 
+        image: image, 
+        description: indexs[i], 
+        folder: "EVI",
+        fileNamePrefix: indexs[i], 
+        scale: 250,
+        crs:"EPSG:4326",
+        maxPixels:10e12,
+        region: geometry,//geometry.geometry().bounds() use this if it is shp polygon
+        fileFormat: 'GeoTIFF',
+      }); 
+    } 
+  });
+} 
+exportImageCollection(annualCol);
+
