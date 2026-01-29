@@ -1,0 +1,1 @@
+First, we acquired MODIS EVI data through Google Earth Engine. Next, we estimated global and urban EVI trends using MATLAB. Finally, we decomposed urban EVI trends into contributions from biogeochemical drivers and land-use management based on a conceptual model and incorporating high-resolution satellite data.
